@@ -22,6 +22,8 @@ paused = False
 display_info = False
 speed_multiplier = 1.0  # Speed control factor
 button_font = None
+info_font = None
+
 
 # Load Background Image
 pygame.init()
@@ -52,12 +54,12 @@ def default_bodies():
     return [
         {'mass': 1.0, 'pos': np.array([-1.02, 0.25]), 'vel': np.array([0.47, 0.42]), 'color': (255, 0, 0)},
         {'mass': .4, 'pos': np.array([2.01, -0.24]), 'vel': np.array([-0.8, .85]), 'color': (0, 255, 0)},
-        {'mass': 2.0, 'pos': np.array([0.0, 0.0]), 'vel': np.array([-0.92, -0.97]), 'color': (0, 0, 255)}
+        {'mass': 2.0, 'pos': np.array([0.0, 0.0]), 'vel': np.array([-0.92, -0.97]), 'color': (0, 100, 255)}
     ]
 
 bodies = default_bodies()
 trails = [[] for _ in bodies]  # Restore trails
-max_trail_length = 3000  # Controls how long the trails remain visible
+max_trail_length = 4000  # Controls how long the trails remain visible
 
 def compute_accelerations(bodies):
     """Computes gravitational acceleration for each body due to all other bodies."""
@@ -133,10 +135,11 @@ def get_center_of_mass():
 
 async def main():
     """Runs the simulation loop using Pygame to visualize motion and add UI controls."""
-    global button_font, background_x, background_y, elapsed_time
+    global button_font, info_font, background_x, background_y, elapsed_time
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
-    button_font = pygame.font.Font(None, 25)
+    button_font = pygame.font.Font(None, 40)
+    info_font = pygame.font.Font(None, 30)
     elapsed_time = 0  # Initialize simulation time in days
     running = True
     
@@ -182,15 +185,15 @@ async def main():
 
             # Draw bodies
             pygame.draw.circle(screen, body['color'], (x, y), radius)
-            pygame.draw.circle(screen, body['color'], (x, y), radius, 1)  # White outline
+            pygame.draw.circle(screen, body['color'], (x, y), radius, 1)  #outline
 
 
             # Calculate speed in km/s
             speed_km_s = np.linalg.norm(body['vel']) * 30  # Assuming 1 velocity unit = 30 km/s (earth speed)
 
             # Display mass, size, and speed
-            info_text = f"Mass: {body['mass']:.1f}x Sun | Radius: {radius * 700}k km | Vel: {speed_km_s:.1f} km/s"
-            info_surface = button_font.render(info_text, True, (255, 255, 255))
+            info_text = f"Mass: {body['mass']:.1f}x Sun | Radius: {radius * 140}k km | Vel: {speed_km_s:.1f} km/s"
+            info_surface = info_font.render(info_text, True, (255, 255, 255))
             if display_info:
                 screen.blit(info_surface, (x + 10, y - 10))  # Position text near body
 
@@ -200,11 +203,11 @@ async def main():
         text_color = (255, 255, 255)  
 
         buttons = [
-            {"rect": pygame.Rect(10, HEIGHT - 50, 70, 30), "label": "Pause", "action": toggle_pause},
-            {"rect": pygame.Rect(100, HEIGHT - 50, 70, 30), "label": "Reset", "action": reset_simulation},
-            {"rect": pygame.Rect(200, HEIGHT - 50, 30, 30), "label": "+", "action": lambda: adjust_speed(0.1)},
-            {"rect": pygame.Rect(240, HEIGHT - 50, 30, 30), "label": "-", "action": lambda: adjust_speed(-0.1)},
-            {"rect": pygame.Rect(360, HEIGHT - 50, 110, 30), "label": "Info bodies", "action": toggle_display_info},
+            {"rect": pygame.Rect(10, HEIGHT - 70, 90, 40), "label": "Pause", "action": toggle_pause},
+            {"rect": pygame.Rect(110, HEIGHT - 70, 90, 40), "label": "Reset", "action": reset_simulation},
+            {"rect": pygame.Rect(220, HEIGHT - 70, 40, 40), "label": "+", "action": lambda: adjust_speed(0.1)},
+            {"rect": pygame.Rect(270, HEIGHT - 70, 40, 40), "label": "-", "action": lambda: adjust_speed(-0.1)},
+            {"rect": pygame.Rect(400, HEIGHT - 70, 160, 40), "label": "Info bodies", "action": toggle_display_info},
         ]
 
         for event in pygame.event.get():
@@ -221,8 +224,12 @@ async def main():
             rect = button["rect"]
             color = hover_color if rect.collidepoint(mouse_x, mouse_y) else button_color  
             pygame.draw.rect(screen, color, rect, border_radius=10)  
+            # label_surface = button_font.render(button["label"], True, text_color)
+            # screen.blit(label_surface, (rect.x + 10, rect.y + 5))  
             label_surface = button_font.render(button["label"], True, text_color)
-            screen.blit(label_surface, (rect.x + 10, rect.y + 5))  
+            label_rect = label_surface.get_rect(center=rect.center)
+            screen.blit(label_surface, label_rect)
+
 
         # Display elapsed time
         years = elapsed_time / 365  
@@ -233,7 +240,7 @@ async def main():
 
         # Display speed multiplier value
         speed_text = button_font.render(f"x{speed_multiplier:.1f}", True, text_color)  
-        screen.blit(speed_text, (280, HEIGHT - 45))  
+        screen.blit(speed_text, (320, HEIGHT - 65))  
 
         pygame.display.flip()
 
